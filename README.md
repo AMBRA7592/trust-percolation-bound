@@ -77,4 +77,4 @@ MIT
 
 ## Contact
 
-Amadeus Brandes — [amadeusbrandes on arXiv](https://arxiv.org/search/?searchtype=author&query=amadeusbrandes)
+Amadeus Brandes — [ORCID](https://orcid.org/0009-0009-9902-2587)
