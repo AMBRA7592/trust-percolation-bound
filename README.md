@@ -1,39 +1,48 @@
 # The Trust Percolation Bound
 
-Companion code and figures for:
+**"The Trust Percolation Bound: Correlated Trust Failure and the Structural Limits of Trust Governance"**
 
-**"The Trust Percolation Bound: Correlated Trust Failure and the Topology of Governance Transitions"**
-Amadeus Brandes, April 2026
+Amadeus Brandes, Independent Researcher, Kronberg, Germany
+
+arXiv: [XXXX.XXXXX](https://arxiv.org/abs/XXXX.XXXXX) (physics.soc-ph; cross-listed cs.SI, econ.TH)
+
+---
 
 ## Overview
 
-Trust-based governance fails not because bilateral trust erodes, but because trust failures become correlated. This paper derives an exact analytic floor for cascade initiation and demonstrates a sharp phase boundary in the space of network connectivity and contagion sensitivity.
+Trust-based governance fails not because bilateral trust erodes, but because trust failures become correlated through the network's local structure. This paper models trust as accumulated evidence and motivates a cascade rule from Bayesian posterior contamination. It proves an exact analytic floor for cascade initiation and demonstrates that, in the intermediate contagion regime, the cascade phase transition requires persistent local clustering — a structural prerequisite absent from standard random-graph benchmarks but present in many real coordination networks.
 
-**Proposition 1.** Under a single-node shock, no secondary trust failure can occur if contagion sensitivity ρ ≤ 1 − √τ, regardless of network structure.
+The paper identifies an endogenous structural tension in trust governance: the shared-contact topology that makes distributed trust coordination efficient is also the topology that, under sufficient contagion sensitivity and connectivity, makes correlated trust failure possible.
 
-**Benchmark Result 1.** The materiality boundary ρ*(B) converges to the analytic floor as effective connectivity B increases.
+**Proposition 1.** Under a single-node shock with uniform initial trust stocks, no secondary trust failure can occur if contagion sensitivity ρ ≤ 1 − √τ, regardless of network structure.
 
-**Benchmark Result 2.** Effective connectivity governs cascade onset; network topology governs cascade severity conditional on onset.
+**Clustering prerequisite.** In the intermediate contagion regime (1 − √τ < ρ ≤ 1 − τ), the cascade phase transition requires persistent local clustering. On locally tree-like networks (ER, configuration model), cascades vanish with system size. On networks with fixed clustering (Watts–Strogatz), the transition is sharp, sharpens with *n*, and sits at the analytic floor.
+
+**Empirical anchor.** The global clinical trial system is used as an empirical anchor. A sponsor–sponsor projection of the site–sponsor bipartite network (ClinicalTrials.gov, Phase III oncology, 2022–present) yields: mean degree ⟨k⟩ ≈ 66.6, Molloy–Reed branching factor B ≈ 154, average clustering C ≈ 0.77 (global transitivity 0.48), and a giant component covering 98.4% of connected sponsors.
 
 ## Repository Structure
 
 ```
 paper/
-  tpb_paper_draft_v1.md       # Full paper draft
+  brandes_tpb_2026.tex           # LaTeX submission file (23 references)
 
 figures/
-  fig1_initiation_floor.png   # Proposition 1 verification across 12 τ values
-  fig2_phase_boundary.png     # ρ*(B) with 95% bootstrap CI
-  fig3_phase_space.png        # Full (⟨k⟩, ρ) phase space heatmap
-  fig4_cascade_profiles.png   # Net secondary cascade profiles at fixed B
+  prop1_verification.png         # Fig 1: Proposition 1 across 13 τ values
+  fss_ws_profiles.png            # Fig 2: WS cascade profiles, 4 system sizes
+  fss_ws_vs_er.png               # Fig 3: WS vs ER contrast + ER detail
+  step3_overlay.png              # Fig 4: Multiplicative vs additive rules
+  fss_peaks_and_clustering.png   # Fig 5: Peak exposure and clustering vs n
 
 simulations/
-  tpb_benchmark.py            # Core benchmark: money plot, threshold decomposition,
-                               # topology comparison, reliability robustness
-  tpb_propositions.py         # Proposition 1 verification, B-matched topology
-                               # comparison, publication heatmap
-  tpb_corrected.py            # Corrected fine boundary using net secondary
-                               # exposure with bootstrap CI
+  tpb_figures_pub.py             # Publication figure generation (final)
+  tpb_propositions.py            # Proposition 1 verification + topology comparison
+  tpb_corrected.py               # Corrected phase boundary with CI
+  tpb_benchmark.py               # Core benchmark (v1, retained)
+  tpb_network_projection.py      # Sponsor-sponsor projection analysis
+
+data/
+  tpb_clinical_trials_query.py   # ClinicalTrials.gov API query (run in Colab)
+  tpb_network_projection.py      # Sponsor-sponsor projection (run in Colab)
 ```
 
 ## Reproducing the Results
@@ -43,33 +52,40 @@ Requirements: Python 3.8+, `numpy`, `networkx`, `matplotlib`.
 ```bash
 pip install numpy networkx matplotlib
 
-# Core benchmark (produces plots 1-4 from the initial sweep)
-python simulations/tpb_benchmark.py
-
-# Proposition 1 verification + B-matched topology comparison
-python simulations/tpb_propositions.py
-
-# Corrected phase boundary with confidence intervals
-python simulations/tpb_corrected.py
+# Publication figures (Figures 1–5)
+python simulations/tpb_figures_pub.py
 ```
 
-Each script is self-contained and produces figures in the working directory. Runtime is 2–5 minutes per script on a standard machine.
+Runtime: ~10–15 minutes. WS simulations use 500 cascade runs per ρ point at n = 250, decreasing to 20 at n = 2000.
 
-## Parameters
+The clinical trial data scripts (`data/`) query the ClinicalTrials.gov API and require an internet connection. They are designed to run in Google Colab.
 
-All simulations use the following benchmark configuration unless otherwise noted:
+## Key Parameters
 
 | Parameter | Value | Meaning |
 |-----------|-------|---------|
-| n | 250 | Number of agents |
-| I₀ | 1.0 | Initial trust stock per edge |
 | τ | 0.55 | Coordination threshold |
-| ρ | swept | Contagion sensitivity |
 | ρ_min | 0.2584 | Analytic cascade floor (= 1 − √τ) |
+| ⟨k⟩ | 6 | Mean degree (WS/ER benchmarks) |
+| n | 250–2000 | System sizes (finite-size scaling) |
+| WS p | 0.1 | Rewiring probability (clustering ≈ 0.45) |
 
-## Key Finding
+## Data Sources
 
-The cascade initiation floor ρ_min = 1 − √τ is exact: below it, zero net secondary cascade on any graph. Above it, the materiality boundary converges to the floor as effective connectivity increases — producing a sharp governance transition concentrated in a vanishingly narrow parameter band at high connectivity.
+- **ClinicalTrials.gov API v2**: Phase III oncology trials, 2022–present (2,312 trials, 830 sponsors, 44,913 sites)
+- **AACT Database** (CTTI): facility_investigators table for investigator overlap analysis
+- Sponsor–sponsor projection statistics computed from ClinicalTrials.gov data
+
+## Citation
+
+```bibtex
+@article{brandes2026tpb,
+  author  = {Brandes, Amadeus},
+  title   = {The Trust Percolation Bound: Correlated Trust Failure and the Structural Limits of Trust Governance},
+  year    = {2026},
+  note    = {arXiv:XXXX.XXXXX [physics.soc-ph]}
+}
+```
 
 ## License
 
@@ -77,4 +93,4 @@ MIT
 
 ## Contact
 
-Amadeus Brandes — [ORCID](https://orcid.org/0009-0009-9902-2587)
+Amadeus Brandes — [ORCID 0009-0009-9902-2587](https://orcid.org/0009-0009-9902-2587)

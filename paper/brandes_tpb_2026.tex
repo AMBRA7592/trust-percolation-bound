@@ -1,0 +1,596 @@
+\documentclass[11pt,a4paper]{article}
+
+% --- Packages ---
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage{amsmath,amsthm,amssymb}
+\usepackage{graphicx}
+\usepackage{booktabs}
+\usepackage{enumerate}
+\usepackage{hyperref}
+\usepackage[margin=1in]{geometry}
+
+% --- Theorem environments ---
+\newtheorem{proposition}{Proposition}
+\newtheorem{definition}{Definition}
+\newtheorem*{remark}{Remark}
+
+% --- Title block ---
+\title{The Trust Percolation Bound: Correlated Trust Failure and the Structural Limits of Trust Governance}
+\author{Amadeus Brandes\\
+\textit{Independent Researcher, Kronberg, Germany}}
+\date{April 2026}
+
+\begin{document}
+\maketitle
+
+\begin{abstract}
+Trust-based governance fails not because bilateral trust erodes, but because trust failures become correlated through the network's local structure. This paper models trust as accumulated evidence about counterpart behavior and motivates a cascade rule from Bayesian posterior contamination: when a neighboring relationship fails, it independently discounts a fraction of the evidence supporting adjacent trust assessments, producing a multiplicative degradation that compounds with the number of simultaneous failures. This motivation yields an exact analytic floor --- the minimum contagion sensitivity below which no secondary trust failure can occur under a single-node shock, regardless of network structure, given uniform initial trust stocks. Computational experiments then reveal that the cascade phase transition has a structural prerequisite in the intermediate contagion regime (where multiple simultaneous hits are required to fail an edge): persistent local clustering. On locally tree-like networks (including the large-$n$ limit of Erd\H{o}s--R\'enyi graphs), the cascade mechanism cannot engage because the required double-hit exposure vanishes with system size. On networks with fixed clustering (Watts--Strogatz small-world graphs), the transition is sharp, sharpens further with system size, and sits at the analytic floor from $n = 250$ to $n = 2000$. The sharpness is robust across the cascade rules tested: both multiplicative and additive degradation produce step-function transitions at their respective analytic floors. Conditional on onset, cascade severity is governed by network topology --- community structure determines how much of the network a cascade destroys. These results provide a measurable structural condition for trust governance failure: it occurs on networks that combine sufficient contagion sensitivity, sufficient connectivity, and persistent local clustering --- a combination characteristic of many empirically observed social and organizational networks. The theory is empirically anchored through the global clinical trial system, where proxy evidence from three independent structural layers of public data is consistent with the theory's structural conditions, and the existing verification architecture is not calibrated to the network topology.
+\end{abstract}
+
+
+%% ============================================================
+%% SECTION 1
+%% ============================================================
+
+\section{Introduction}
+
+Every coordination system faces a foundational choice: trust or verify. Small communities coordinate through trust --- internalized models of each other's behavior, built through repeated costly interaction. Large institutions coordinate through verification --- contracts, audits, compliance frameworks, cryptographic proof. The transition between these regimes is among the most consequential structural events in economic and institutional life.
+
+The existing literature treats this transition as driven by scaling pressures. Transaction cost economics locates the driver in asset specificity and bounded rationality \cite{williamson1975,williamson1985}. Embeddedness theory points to the erosion of social relations \cite{granovetter1985}. Commons governance research identifies institutional design conditions under which self-governance succeeds or fails \cite{ostrom1990}. These frameworks are insightful but share a common limitation: they do not predict \emph{when} the governance transition occurs, \emph{why} it is often abrupt rather than gradual, or \emph{what structural features} of the coordination network determine whether trust governance scales.
+
+This paper develops a theory of trust governance failure from three foundations: Bayesian learning, threshold contagion, and network topology. The central claim is that trust-based governance undergoes a sharp phase transition --- not a smooth degradation --- in the intermediate contagion regime (where multiple simultaneous hits are required to fail an edge) when three conditions are simultaneously met: contagion sensitivity exceeds an analytic floor, effective connectivity is sufficient for cascade propagation, and the network exhibits persistent local clustering. The first two conditions have natural parallels in existing cascade models \cite{granovetter1978,watts2002}. The third --- the clustering condition --- is the paper's most general contribution: it identifies a structural prerequisite for the cascade phase transition that is absent from standard random-graph benchmarks but present in many real coordination networks. The novelty is not the generic observation that clustering matters for complex contagion \cite{centola2007}; it is the combination of an edge-based trust-depletion mechanism, an exact initiation floor under uniform initialization, and a governance interpretation. The model identifies a structural vulnerability condition for trust-based coordination; the downstream institutional transition to verification governance is outside the model. Because trust-based coordination economizes on search, monitoring, and reputation through shared contacts, the same triadic closure that makes distributed trust efficient also creates the persistent local overlap required for correlated trust failure.
+
+The paper makes four contributions. First, it motivates the cascade rule from Bayesian posterior contamination, providing an information-theoretic microfoundation for the multiplicative update mechanism (\S2--3). Second, it proves an exact analytic floor for cascade initiation that is independent of network structure under uniform initialization (\S4). Third, it demonstrates that the phase transition requires persistent local clustering and vanishes on locally tree-like graphs, even at high connectivity --- a result revealed by finite-size scaling across topology classes (\S5), thereby identifying an endogenous structural tension in trust governance: the local overlap that supports efficient trust coordination is also the overlap that enables correlated trust failure. Fourth, it shows that the sharpness of the transition is robust across cascade rules, and that cascade severity conditional on onset is governed by network topology (\S6--7).
+
+The clustering condition is a claim about real coordination networks, not about abstract graph families. Its validity therefore depends on showing that real systems plausibly meet the required conditions, and \S8 provides empirical evidence for this through quantified network data from the global clinical trial system.
+
+
+%% ============================================================
+%% SECTION 2
+%% ============================================================
+
+\section{Trust as Accumulated Evidence}
+
+\subsection{Trust as Information Gain}
+
+Let $G = (V, E)$ be a network of $n$ agents. Agent $i$'s trust in agent $j$ is the information $i$ has accumulated about $j$'s decision function, measured as divergence from a maximum-ignorance prior.
+
+\begin{definition}[Trust]
+Let $p_{ij}(\theta)$ be $i$'s posterior over $j$'s decision function $\theta$, and $p_0(\theta)$ the uninformed prior. Trust is:
+\begin{equation}
+I_{ij} = D_{\mathrm{KL}}\left( p_{ij}(\theta) \,\|\, p_0(\theta) \right)
+\label{eq:trust}
+\end{equation}
+\end{definition}
+
+This quantity is non-negative, invariant to reparameterization, and naturally connected to Bayesian learning: each observation of $j$'s behavior updates $p_{ij}$ and increases $I_{ij}$ on average. Trust depreciates under noise --- personnel turnover, changing incentives, strategic drift --- at rate $\gamma_{ij}$, requiring continuous expenditure to maintain. Building trust is incremental ($O(I_{ij}/\bar{r})$ in time); destroying it requires only a single sufficiently informative defection ($O(1)$). This asymmetry, well-documented empirically \cite{slovic1993,kramer1999}, is a structural feature of Bayesian learning under asymmetric signal informativeness.
+
+\subsection{The Contamination Model}
+
+When a neighboring trust relationship fails, it constitutes a contaminating signal about the reliability of locally-routed information. We model each contaminating hit as a fractional evidence discount: the accumulated evidence supporting a trust assessment is reduced by a constant fraction $\rho$, where $\rho \in (0,1)$ measures how much locally-intermediated trust depends on the failed relationship.
+
+In likelihood-ratio terms, one contaminating hit transforms $L_{ij}(\theta) \mapsto L_{ij}(\theta)^{1-\rho}$ --- the agent retains a fraction $(1-\rho)$ of their evidence. In log-evidence space: $\log L_{ij} \mapsto (1-\rho) \cdot \log L_{ij}$.
+
+\textbf{Key assumption:} Contaminating hits from distinct failed edges are informationally independent. Independent discounts compose multiplicatively. After $h$ independent hits:
+\begin{equation}
+\log L_{ij} \mapsto (1-\rho)^h \cdot \log L_{ij}
+\label{eq:logevidence}
+\end{equation}
+
+The operational trust stock in the cascade model is the log-evidence ratio, which is the natural parameter underlying the KL divergence. The two are monotonically related: a threshold on the log-evidence ratio corresponds to a threshold on the KL divergence, and vice versa. We normalize so that $I_e = 1$ at initialization.
+
+The multiplicative cascade rule
+\begin{equation}
+I_e \leftarrow I_e \cdot (1-\rho)^h
+\label{eq:cascade_rule}
+\end{equation}
+is therefore not an arbitrary modeling choice. It is the natural update rule under independent fractional evidence discounting in log-evidence space.
+
+\textbf{Scope conditions.} The motivation depends on two assumptions: (i)~contaminating hits are approximately independent, and (ii)~the discount fraction $\rho$ is approximately uniform across edges. These hold when trust is built diffusely through many small interactions (so that fractional discounting is a reasonable approximation to evidence loss) and break when trust rests on a few decisive observations or when contamination events share a common cause. These conditions define the model's domain of applicability: diffuse-trust organizations with approximately symmetric intermediation structures. The multiplicative discounting structure is more naturally interpreted as a loss-based belief update in the sense of Bissiri, Holmes, and Walker \cite{bissiri2016} than as standard Bayesian inference, since the contamination signal is not a fully specified likelihood but a fractional discount on accumulated evidence.
+
+
+%% ============================================================
+%% SECTION 3
+%% ============================================================
+
+\section{The Cascade Model}
+
+\subsection{Three Distinct Graphs}
+
+To avoid conflation, we distinguish three network structures:
+
+\textbf{The direct trust graph $G_T$:} edges where agents have accumulated information through direct interaction. \textbf{The coordination dependence graph $G_C$:} edges where agents must coordinate. \textbf{The trust intermediation graph $G_I$:} edges where one agent's trust in a third party depends on information routed through the other. $G_I$ determines how trust failures propagate. The central theoretical object is $G_I$.
+
+\subsection{Cascade Dynamics}
+
+\begin{definition}[Coordination threshold]
+A pair $(i,j)$ is \emph{trust-coordinable} if $I_{\mathrm{eff}}(i,j) \geq \tau$, where $I_{\mathrm{eff}}(i,j)$ is the operational trust stock on the edge connecting $i$ and $j$ in $G_I$ (denoted $I_e$ in what follows), and $\tau > 0$ is the minimum evidence required for trust-based coordination.
+\end{definition}
+
+\begin{definition}[Cascade model]
+Each edge in $G_I$ carries trust stock $I_e$, initialized at $I_0 = 1$. A single-node shock removes all edges incident to a target node. Surviving edges adjacent to failed edges are updated per the contamination model: $I_e \leftarrow I_e \cdot (1-\rho)^{h_e}$, where $h_e$ is the number of adjacent failed edges. Edges dropping below $\tau$ fail and join the cascade. The process iterates until stable.
+\end{definition}
+
+\begin{definition}[Net secondary cascade]
+The cascade size $|\mathcal{C}|$ is the number of agent pairs losing trust-coordinability after the cascade, \emph{net of} the direct disruption from removing the target node.
+\end{definition}
+
+\subsection{Control Parameters}
+
+\begin{definition}[Effective connectivity]
+The Molloy--Reed branching factor of $G_I$:
+\begin{equation}
+B = \frac{\langle k^2 \rangle - \langle k \rangle}{\langle k \rangle}
+\label{eq:branching}
+\end{equation}
+\end{definition}
+
+The model has two control parameters: $B$ (a degree-based connectivity proxy inherited from cascade theory on random graphs; on clustered graphs it is not a sufficient statistic for onset) and $\rho$ (contagion sensitivity). The coordination threshold $\tau$ is a fixed system parameter.
+
+
+%% ============================================================
+%% SECTION 4
+%% ============================================================
+
+\section{The Cascade Initiation Floor}
+
+\begin{proposition}
+Under the benchmark cascade model with a single-node shock, if $\rho \leq 1 - \sqrt{\tau}$, then no secondary edge failure can occur. The net secondary cascade is zero on any graph.
+\end{proposition}
+
+\begin{proof}
+On the first post-shock update, every surviving edge receives at most $h_{\max} = 2$ hits (one through each endpoint). Trust stock after maximum exposure: $I_0 \cdot (1-\rho)^2$. This survives if $(1-\rho)^2 \geq \tau$, i.e., $\rho \leq 1 - \sqrt{\tau}$. With no first-wave failures, there is no second wave.
+\end{proof}
+
+At $\tau = 0.55$:
+\begin{equation}
+\rho_{\min} = 1 - \sqrt{0.55} \approx 0.2584
+\label{eq:rhomin}
+\end{equation}
+
+\textbf{Verification.} Empirical onset of cascade amplification tracks $\rho_{\min} = 1 - \sqrt{\tau}$ across 13 values of $\tau$ from 0.20 to 0.80, with deviations smaller than the $\rho$-grid resolution (Figure~\ref{fig:prop1}). The onset is stable across system sizes from $n = 250$ to $n = 2000$ on both Erd\H{o}s--R\'enyi and Watts--Strogatz topologies.
+
+\begin{figure}[!htbp]
+\centering
+\includegraphics[width=0.75\textwidth]{prop1_verification.png}
+\caption{\textbf{Why is there a universal initiation floor?} Analytic floor $\rho_{\min} = 1 - \sqrt{\tau}$ (solid line) and empirical onset of cascade amplification (points) across 13 values of $\tau$. ER benchmark, $n = 250$, $\langle k \rangle = 5.5$. (Subsequent simulations in \S\S5--6 use $\langle k \rangle = 6$; the floor is invariant to this difference, as predicted by Proposition~1.)}
+\label{fig:prop1}
+\end{figure}
+
+\begin{remark}
+Proposition~1 is an initiation bound, not a materiality bound. Material cascade requires both $\rho > \rho_{\min}$ and a network structure that provides sufficient double-hit opportunities for the cascade to propagate beyond the immediate neighborhood of the shock. The floor is exact for the benchmark model's uniform initialization ($I_e = I_0 = 1$ for all edges). In systems with heterogeneous pre-shock trust stocks --- where some edges are partially degraded or newly formed --- the effective floor would be lower, as edges closer to $\tau$ require less contamination to fail.
+\end{remark}
+
+
+%% ============================================================
+%% SECTION 5
+%% ============================================================
+
+\section{The Clustering Condition}
+
+This section presents the paper's most general finding: the cascade phase transition has a structural prerequisite that is absent from standard random-graph benchmarks but present in many real coordination networks.
+
+\subsection{The Finite-Size Scaling Puzzle}
+
+The original benchmark (Erd\H{o}s--R\'enyi random graphs at fixed mean degree $\langle k \rangle = 6$) shows strong cascades at $n = 250$ but virtually none at $n = 2000$. Peak net secondary cascade exposure declines from 42\% to 8\% as $n$ increases from 250 to 2000, and the onset moves away from the analytic floor.
+
+This is not a finite-size rounding effect. It reflects a structural feature of ER graphs: the clustering coefficient scales as $\langle k \rangle / (n-1)$ and vanishes at large $n$. At $n = 250$, clustering is 0.024; at $n = 2000$, it is 0.003. As ER becomes locally tree-like, the double-hit mechanism required for cascade initiation loses the shared-neighbor structure (triangles) it depends on. In a tree, each surviving edge receives at most one hit, which is insufficient to breach the threshold.
+
+\subsection{The Structural Prerequisite}
+
+The cascade mechanism requires that a surviving edge can receive hits from at least two directions simultaneously --- which requires its endpoints to share neighbors with the shocked node. This is precisely the definition of a triangle. The cascade phase transition therefore requires \emph{persistent local clustering}: a clustering coefficient that remains bounded away from zero as $n$ grows. This requirement is structurally related to the distinction between simple and complex contagion \cite{centola2007}: the double-hit mechanism is a specific instance of complex contagion, where multiple simultaneous exposures are required for transmission.
+
+\textbf{Scope of the clustering condition.} The double-hit mechanism --- and therefore the clustering requirement --- applies in the intermediate contagion regime $1 - \sqrt{\tau} < \rho \leq 1 - \tau$. At $\tau = 0.55$, this is the band $0.258 < \rho \leq 0.45$. Above $\rho = 1 - \tau$, a single contaminating hit is sufficient to fail an edge: $(1-\rho) \cdot I_0 < \tau$. In that regime, cascades propagate on any connected graph regardless of clustering, because the contagion is simple rather than complex. The clustering condition characterizes the regime where institutional trust actually lives: $\rho > 0.45$ implies that a single neighboring failure destroys nearly half an agent's accumulated evidence, which represents an extreme sensitivity unlikely to characterize stable trust-based governance. The intermediate band, where contamination is consequential but not individually catastrophic, is the domain where the clustering condition is both necessary and institutionally relevant. All simulations in this paper operate within this band.
+
+Erd\H{o}s--R\'enyi graphs lack this property. So do configuration-model graphs and sparse stochastic block models at fixed mean degree. The standard random graph benchmarks used in cascade theory become locally tree-like at scale, though sparse random graph models with prescribed clustering do exist \cite{newman2009}.
+
+Real networks are different. Triadic closure, homophily, geographic proximity, and institutional co-membership actively create and maintain triangles. Many social, organizational, and financial networks exhibit substantial clustering that does not vanish with system size in the way standard sparse random graphs do. The structural prerequisite for cascade vulnerability is a common feature of many human coordination networks.
+
+\subsection{Confirmation: Watts--Strogatz Small-World Graphs}
+
+Watts--Strogatz (WS) graphs provide a clean test: clustering is a tunable parameter (controlled by the rewiring probability $p$) that remains constant as $n$ grows.
+
+At $k = 6$, $p = 0.1$ (clustering $\approx 0.45$), the results are definitive (Figure~\ref{fig:ws_profiles}):
+
+\begin{enumerate}[(a)]
+\item The cascade transition is a near-vertical step function at $\rho_{\min}$ for all system sizes tested ($n = 250, 500, 1000, 2000$).
+
+\item Peak net secondary cascade exposure is 99.2\% at $n = 250$ and increases to 99.9\% at $n = 2000$. The transition does not weaken with system size; it \emph{sharpens}.
+
+\item The onset sits at $\rho = 0.262$ (one grid step above the analytic floor $\rho_{\min} = 0.258$) at every system size tested.
+\end{enumerate}
+
+The WS result should be interpreted carefully. The 99\%+ severity is a feature of WS's \emph{uniform} clustering --- every node sits in the same local neighborhood structure, so there are no firebreaks. Real networks have clustering heterogeneity (dense communities separated by sparse bridges), which compartmentalizes cascades. The WS result confirms the mechanism and the sharpness of the transition, but the severity represents an upper bound: the outcome when persistent clustering exists everywhere and compartmentalization exists nowhere.
+
+\begin{figure}[!htbp]
+\centering
+\includegraphics[width=0.75\textwidth]{fss_ws_profiles.png}
+\caption{\textbf{The clustering condition.} Net secondary cascade profiles on Watts--Strogatz graphs ($k = 6$, $p = 0.1$, clustering $\approx 0.45$) at four system sizes. The transition is a step function at $\rho_{\min}$, stable from $n = 250$ to $n = 2000$. Peak severity increases with $n$.}
+\label{fig:ws_profiles}
+\end{figure}
+
+\subsection{The Contrast}
+
+Figure~\ref{fig:ws_vs_er} shows WS and ER side by side at each system size. The contrast crystallizes the finding. WS (clustering $\approx 0.45$, constant): step function at $\rho_{\min}$, identical across all $n$. ER (clustering vanishing from 0.024 to 0.003): cascades weaken and eventually disappear. Peak cascade tracks clustering coefficient, not system size (Figure~\ref{fig:peaks_clustering}).
+
+The correct scope statement for the theory is: the cascade phase transition occurs on networks with persistent local clustering, which includes many empirically observed social, organizational, and financial networks, and does not occur on locally tree-like graphs, which includes the large-$n$ limit of standard random-graph models at fixed degree.
+
+The clustering condition characterizes the theory's structural implication. The theory applies to networks where triadic closure creates local overlap --- the same structural feature that makes trust-based coordination efficient (shared contacts reduce search and verification costs) also creates the vulnerability that enables cascading trust failure. In that sense, persistent clustering is not only a scope condition of the cascade model; in many trust-governed settings it is also an endogenous byproduct of the very shared-contact structure through which trust coordination economizes on search, monitoring, and reputation.
+
+\begin{figure}[!htbp]
+\centering
+\includegraphics[width=0.75\textwidth]{fss_ws_vs_er.png}
+\caption{\textbf{Persistent clustering vs.\ vanishing clustering.} Top row: WS (blue, clustering $\approx 0.45$) vs.\ ER (red, clustering vanishing) at each system size, same $\langle k \rangle = 6$. WS produces a step function at $\rho_{\min}$, identical across $n$. Bottom row: ER detail at rescaled vertical axis. Peak ER cascade exposure declines from approximately 37\% at $n = 250$ to 24\% at $n = 500$, 17\% at $n = 1000$, and $< 1$\% at $n = 2000$, confirming that cascade initiation requires persistent clustering.}
+\label{fig:ws_vs_er}
+\end{figure}
+
+
+%% ============================================================
+%% SECTION 6
+%% ============================================================
+
+\section{Robustness Across Cascade Rules}
+
+\subsection{The Additive Alternative}
+
+To test whether the sharpness of the transition is specific to the multiplicative cascade rule or structural, we compare two rules on WS graphs:
+
+\textbf{Multiplicative:} $I_e \leftarrow I_e \cdot (1-\rho)^{h_e}$ (motivated by Bayesian contamination)
+
+\textbf{Additive:}
+\begin{equation}
+I_e \leftarrow I_e - \rho \cdot h_e
+\label{eq:additive_rule}
+\end{equation}
+(linear degradation, no Bayesian grounding)
+
+The additive rule breaks the algebraic structure of the multiplicative floor. Its initiation condition is $I_0 - \rho \cdot h_{\max} < \tau$, giving a different floor: $\rho_{\min}^A = (I_0 - \tau) / h_{\max} = (1 - 0.55)/2 = 0.225$.
+
+\subsection{Result}
+
+Both rules produce step-function transitions at their respective analytic floors on WS graphs (Figure~\ref{fig:step3}). Both reach 99\%+ severity. Both are stable across system sizes. The transition width is zero for both rules at every $n$ tested.
+
+\textbf{Interpretation.} The sharpness is a property of threshold contagion on clustered networks, not of the multiplicative form. The cascade rule determines \emph{where} the floor sits; the network's clustering determines \emph{whether} the transition exists; system size determines \emph{how sharp} it is (sharper at larger $n$). The Bayesian motivation of \S2 is therefore a scope condition that locates the floor, not a fragile assumption that enables the transition.
+
+\begin{figure}[!htbp]
+\centering
+\includegraphics[width=0.75\textwidth]{step3_overlay.png}
+\caption{\textbf{Robustness across cascade rules.} Multiplicative (blue) and additive (red) cascade rules on WS, $n = 1000$. Both produce step-function transitions at their respective analytic floors. Sharpness is structural; the floor location is rule-specific.}
+\label{fig:step3}
+\end{figure}
+
+
+%% ============================================================
+%% SECTION 7
+%% ============================================================
+
+\section{Severity Is Governed by Topology}
+
+\subsection{Onset vs.\ Severity Decomposition}
+
+The analytic floor $\rho_{\min}$ is topology-independent (Proposition~1). But cascade severity above the floor is strongly topology-dependent. At matched effective connectivity $B$ and contagion sensitivity $\rho$, modular (stochastic block model) networks at finite $n$ exhibit $2$--$12\times$ higher cascade exposure than ER networks, due to within-community edge concentration rather than persistent clustering.
+
+This yields a clean decomposition:
+
+\begin{itemize}
+\item \textbf{The analytic floor is universal:} it depends only on $\tau$ and the cascade rule.
+\item \textbf{Effective connectivity $B$ helps condition onset} (as a degree-based proxy): whether enough double-hit paths exist for cascades to propagate.
+\item \textbf{Persistent clustering is the prerequisite:} without it, the mechanism cannot engage at scale.
+\item \textbf{Topology governs severity conditional on onset:} community structure, clustering heterogeneity, and modularity determine how much of the network a cascade destroys.
+\end{itemize}
+
+\subsection{The Three-Topology Story}
+
+ER, WS, and modular-clustered graphs represent three regimes:
+
+\textbf{ER (no persistent clustering):} Cascades cannot initiate at scale. This is the regime where trust governance scales --- not because bilateral trust is high, but because the network lacks the local structure for failures to correlate. Paradoxically, the least ``organized'' networks are the most resilient to trust cascades.
+
+\textbf{WS (uniform persistent clustering, no compartmentalization):} Cascades are total. A single node failure above $\rho_{\min}$ destroys virtually all trust connectivity. This is the upper bound on severity --- the worst case for any network with persistent clustering.
+
+\textbf{Modular (community structure with compartmentalization):} The institutionally relevant intermediate regime. At finite system sizes, within-community edge density can produce local clustering that enables cascade initiation, while sparse inter-community bridges partially contain propagation. Severity is between ER and WS. This is where most real organizations live: enough local density for cascades to start, enough modularity to limit how far they spread. Whether this intermediate behavior persists at scale depends on whether the community structure maintains clustering as $n$ grows --- a property of genuinely clustered models \cite{newman2009} but not of standard sparse SBMs.
+
+\begin{figure}[!htbp]
+\centering
+\includegraphics[width=0.75\textwidth]{fss_peaks_and_clustering.png}
+\caption{\textbf{Peak cascade tracks clustering, not system size.} Left: peak net secondary cascade vs.\ $n$ for WS (constant) and ER (declining). Right: clustering coefficient vs.\ $n$ for both topologies. The two panels mirror each other.}
+\label{fig:peaks_clustering}
+\end{figure}
+
+
+%% ============================================================
+%% SECTION 8
+%% ============================================================
+
+\section{Discriminating Predictions and Falsification}
+
+\subsection{Comparative Predictions}
+
+\begin{table}[!htbp]
+\centering
+\small
+\begin{tabular}{p{3.2cm} p{3cm} p{2.8cm} p{2.8cm} p{2.5cm}}
+\toprule
+\textbf{Prediction} & \textbf{TPB} & \textbf{TCE (Williamson)} & \textbf{Embeddedness (Granovetter)} & \textbf{Commons (Ostrom)} \\
+\midrule
+\textbf{Is the governance transition sharp or smooth?} & Sharp: step-function on clustered networks & Smooth: continuous cost optimization & Ambiguous: cultural shift, no threshold & Conditional on rules; no formal threshold \\
+\addlinespace
+\textbf{Does network clustering matter independently of trust quality?} & Yes: no cascade without persistent clustering, even at high $B$ & Not a variable & Not a variable & Partially: group size matters \\
+\addlinespace
+\textbf{Do hub-dominated networks formalize earlier at equal average connectivity?} & Yes: hub topology generates high $B$ at low $\langle k \rangle$ & Not predicted & Not predicted & Not predicted \\
+\addlinespace
+\textbf{Is the transition robust to the specific cascade rule?} & Yes: sharpness is robust across rules tested; rule determines floor location & Not predicted & Not predicted & Not predicted \\
+\bottomrule
+\end{tabular}
+\caption{Stylized contrasts across governance frameworks. ``Not predicted'' identifies questions the TPB generates that competing frameworks were not designed to address; these absences reflect differences in scope, not failures of those frameworks.}
+\label{tab:predictions}
+\end{table}
+
+The rows marked ``Not predicted'' across competing frameworks identify the TPB's most distinctive predictions. These frameworks do not generate these predictions because they were designed to address different questions; the absence reflects scope, not failure.
+
+The theory predicts that cascade vulnerability is highest where the structural conditions co-occur and where the existing verification infrastructure remains calibrated to bilateral trust rather than to network topology. The question is whether such systems exist --- and whether they exist is not a supplementary matter for the theory but a condition of its applicability. A cascade phase transition that occurs only on networks that don't exist would be a mathematical curiosity rather than a governance result. The following section provides empirical evidence that the global clinical trial system exhibits the structural conditions the theory identifies, with clustering quantifiable from public data at three independent structural layers.
+
+\subsection{An Empirical Anchor: The Clinical Trial System}
+
+The global clinical trial system exhibits structural features consistent with these conditions. Its trust intermediation structure appears densely clustered through shared institutional nodes. Its clustering has plausibly been increasing, as inferred from documented industry consolidation and structural innovations in trial design. And its verification architecture is explicitly trial-level --- designed to audit individual studies, not to assess whether a failure in one trial structurally compromises confidence in others through shared intermediaries.
+
+\textbf{The trust intermediation graph.} When a physician prescribes a drug based on trial evidence, they trust a chain: the published results, the investigators who ran the trial, the sites that enrolled patients, the contract research organization (CRO) that managed data collection, the sponsor who funded it, the regulatory agency that reviewed it. The physician verifies none of this directly. Their confidence is routed through institutional intermediaries.
+
+The trust intermediation structure of this system exhibits substantial shared-intermediary overlap consistent with dense clustering, and the overlap has been increasing. The top five CROs --- IQVIA, Thermo Fisher/PPD, Labcorp/Covance, ICON, and Parexel --- manage approximately 44\% of the global clinical trials market, which reached \$80--90 billion in 2024--2025. Industry consolidation has concentrated trial management in fewer organizations: PPD was acquired by Thermo Fisher for \$17.4 billion in 2021; Syneos Health was taken private for \$7 billion in 2023; Quintiles and IMS Health merged to form IQVIA in 2016.
+
+The site-level clustering is quantifiable from public data. Among 2,302 Phase~III oncology trials registered on ClinicalTrials.gov since 2022, involving 911 distinct sponsors and 44,588 trial sites, 15.6\% of sites enrolled patients for two or more sponsors. The most connected sites participate in trials for dozens of different sponsors simultaneously: Memorial Sloan Kettering Cancer Center (41 sponsors, 81 trials), which along with Seoul National University Hospital (45 sponsors, 109 trials) and Samsung Medical Center (45 sponsors, 121 trials) anchors the FDA and FDA-comparable regulatory space. In the Chinese clinical trial landscape, where trial volumes have grown rapidly, the concentration is even more extreme --- Fudan University Shanghai Cancer Center participates in trials for 65 sponsors across 133 trials. Each of these institutions is a node through which a quality failure in any one sponsor's trial could contaminate confidence in dozens of others through shared site infrastructure, shared personnel, and shared institutional reputation.
+
+The topology of this shared-site structure can be characterized directly. The one-mode projection of the site--sponsor bipartite network --- in which two sponsors are connected if they share at least one trial site --- yields a network of 618 connected sponsors with mean degree $\langle k \rangle \approx 66.6$, a Molloy--Reed branching factor of $B \approx 154$ (well above the percolation threshold), and a giant component encompassing 98.4\% of connected sponsors. The average clustering coefficient is $C \approx 0.77$ and the global transitivity is 0.48. Bipartite projections mechanically inflate clustering, since every multi-sponsor site induces a clique among its sponsors; the gap between average clustering and global transitivity reflects this inflation. Nevertheless, even under conservative adjustment for projection effects, the clustering substantially exceeds the Erd\H{o}s--R\'enyi baseline at matched mean degree ($C_{\mathrm{ER}} \approx 0.11$), and the connectivity ($B \gg 1$) places the network deep within the regime where the cascade mechanism can propagate. This projection is a proxy for the trust-intermediation graph $G_I$, not a direct reconstruction. But the combination of high connectivity and non-trivial clustering --- even after discounting for projection artifacts --- is consistent with the structural conditions the theory identifies as prerequisites for cascade vulnerability in the intermediate contagion regime. Two of the theory's three conditions --- effective connectivity and persistent clustering --- are satisfied with large margin in the observed network. The system's cascade vulnerability therefore reduces to a single unmeasured parameter: the contagion sensitivity $\rho$, which characterizes how much a neighboring trust failure contaminates adjacent assessments. Estimating $\rho$ --- through survey instruments, natural experiments, or retrospective analysis of cases like Vioxx --- would determine whether the system lies above or below the cascade phase boundary.
+
+Investigator-level overlap tells the same story. Querying the AACT database (Clinical Trials Transformation Initiative) for site-level principal investigators on Phase~III cancer trials since 2018, 646 of 5,152 named investigators (12.5\%) serve as PI on trials for two or more different lead sponsors. The most connected investigators span 7 sponsors across 36--39 trials. These are individuals whose methodological practices and professional reputations constitute shared trust infrastructure across competing pharmaceutical programs --- precisely the shared intermediary nodes through which the theory predicts trust contamination propagates.
+
+Structural trends are increasing the clustering further. Master protocol designs, explicitly endorsed by FDA guidance \cite{fda2022,fda2023}, share control arms across multiple investigational drugs under a single infrastructure. Platform trials coordinate multiple sub-studies with shared interim analyses. Adaptive designs create evidential links between otherwise independent treatment arms. Every one of these innovations increases the clustering coefficient of the trust intermediation graph by adding shared nodes and creating triangles.
+
+\textbf{The specific prediction.} The current verification infrastructure --- FDA inspections, GCP compliance audits \cite{ich2025}, IRB oversight, data safety monitoring boards --- is designed to verify individual trials. It checks whether \emph{this} trial was conducted properly, whether \emph{this} dataset is clean. It does not assess whether a quality failure in \emph{that} trial structurally compromises confidence in \emph{this} one through shared intermediaries. The regulatory philosophy is trial-level, not network-level.
+
+The theory predicts that this architecture is structurally insufficient once the trust intermediation network crosses the cascade threshold. A quality failure at a CRO that manages 10--15\% of global phase~III trials would, if the reconstructed trust-intermediation graph lies beyond the phase boundary, act as a cascade initiator whose impact depends on the CRO's position in the network. The investigators who worked on compromised trials also worked on trials for other sponsors. The sites that enrolled patients in compromised trials also enrolled patients in unrelated trials. Each shared node is a channel through which trust contamination propagates beyond the directly affected trials.
+
+\textbf{Retrospective evidence.} The mechanism is visible in cases that have already occurred. When Merck was found to have suppressed cardiovascular risk data for Vioxx, the trust failure did not stay contained to Vioxx or to Merck. Physicians began discounting evidence from pharma-sponsored cardiovascular trials generally --- trials run by different sponsors, at different sites, with different CROs. The contamination propagated through the trust intermediation graph: shared methodological conventions, shared CRO management practices, shared regulatory review processes. The evidential basis for trusting those unrelated trials was partly shared with the evidential basis for trusting the Vioxx data.
+
+During the COVID period, the Surgisphere scandal --- fabricated data published simultaneously in the Lancet and the New England Journal of Medicine --- contaminated confidence across multiple treatment trials, multiple journals, and multiple regulatory decisions. The cascade propagated through shared institutional channels faster than the actual evidence could be evaluated independently. The emergency timeline had compressed the trial network's clustering: investigators who normally worked independently were collaborating on the same disease, preprints created shared evidential channels before peer review could provide verification, and regulatory agencies reviewed overlapping evidence bases simultaneously.
+
+These cases are consistent with the cascade mechanism but do not constitute a test of the theory's specific predictions. The test requires prospective network measurement.
+
+\textbf{The data source.} The trust intermediation graph of the global clinical trial system can be reconstructed from existing public records. ClinicalTrials.gov records trial sites, sponsors, and collaborators for every registered interventional trial; the AACT relational database (maintained by the Clinical Trials Transformation Initiative) parses this data into queryable tables, including site-level investigator records that enable direct computation of cross-sponsor personnel overlap. Site overlap and investigator overlap can be used to compute the clustering coefficient and effective connectivity of the trust intermediation network. CRO market share data is tracked by industry analysts. Conflict-of-interest disclosures in journal publications and regulatory filings document advisory board overlaps. CRO-to-trial mapping --- which CRO managed which trial --- is not reliably available from public data, but the site-level and investigator-level overlap is sufficient to characterize the network's clustering structure.
+
+Measuring this network --- and tracking its trajectory over time as consolidation and master-protocol adoption increase the clustering coefficient --- would provide a direct test of whether the system is approaching or has crossed the phase boundary the theory defines.
+
+\textbf{The policy implication.} If the theory is correct, the structural remedy is specific: regulators need to move from trial-level auditing to network-level monitoring. Verification infrastructure should be proportional to a node's centrality in the trust intermediation network, not just to the number of trials it manages. This means tracking investigator overlap, site overlap, and CRO concentration as systemic risk variables --- the same way financial regulators, after 2008, began monitoring interconnectedness in banking networks \cite{acemoglu2015,haldane2011}. The clinical trial system has not yet made this shift. The structural conditions identified here suggest it should.
+
+\textbf{Falsification.} A major CRO quality failure produces only trial-specific consequences --- physicians and regulators discount the directly affected trials but maintain confidence in unrelated trials that shared institutional intermediaries with the compromised ones. If trust contamination does not propagate through shared nodes, the cascade mechanism does not operate in this domain.
+
+\subsection{Falsification Conditions}
+
+The theory is disconfirmed if, in settings where the modeled trust-dependence network crosses the benchmark connectivity criterion:
+
+\begin{itemize}
+\item governance costs and architecture shift smoothly with no evidence of threshold behavior, even in networks with persistent clustering and contagion sensitivity above the analytic floor;
+\item networks with high clustering do not exhibit sharper governance transitions than networks with low clustering at comparable connectivity;
+\item hub-dominated and distributed networks of equal $B$ exhibit identical cascade severity at matched clustering; or
+\item the finite-size scaling result reverses: cascades on clustered networks weaken rather than sharpen with system size.
+\end{itemize}
+
+
+%% ============================================================
+%% SECTION 9
+%% ============================================================
+
+\section{Discussion}
+
+\subsection{Institutional Interpretation}
+
+The model's control parameters --- effective connectivity $B$, contagion sensitivity $\rho$, and local clustering --- admit natural institutional readings.
+
+$B$ reflects the density of trust intermediation and increases with organizational growth, market integration, and communication technology. $\rho$ measures how much a neighboring failure contaminates adjacent trust assessments; it increases with organizational cultures of mutual dependence and decreases with compartmentalization. Clustering reflects the degree of triadic closure in the coordination network --- how much agents who share a common partner also interact with each other.
+
+The theory says: trust governance is viable when the coordination network is either below the contagion-sensitivity floor (strong compartmentalization), or lacks the local clustering for cascades to propagate (hub-and-spoke structures), or has low enough connectivity that cascades remain bounded. Crossing all three thresholds simultaneously triggers a regime shift.
+
+The clinical trial system (\S8.2) is the domain where this prediction is most specific and most testable. But the logic extends to any institutional setting where trust is intermediated through shared nodes with persistent clustering --- financial networks (where interbank lending creates dense triadic closure among institutions sharing common counterparties), supply chains (where tiered supplier relationships create overlapping trust dependencies), and professional services networks (where shared partners, auditors, and advisors create institutional triangles). In each case, the theory predicts that bilateral verification is structurally insufficient once the trust intermediation graph crosses the phase boundary, and that the regulatory architecture should be calibrated to the network's clustering and connectivity, not just to the volume or quality of individual relationships.
+
+The construction-destruction asymmetry from \S2.1 provides a natural defense against the objection that agents might rewire to avoid cascades. Cascade propagation completes in $O(d)$ synchronous rounds, where $d$ is the network diameter --- each round is effectively instantaneous relative to interaction frequency, since it requires only the observation that a neighbor has failed. Trust reconstruction, by contrast, requires $O(I/\bar{r})$ interaction cycles \emph{per edge}, where $\bar{r}$ is the mean refresh rate. Rewiring therefore cannot outrun propagation whenever
+\begin{equation}
+d \cdot \bar{r} \ll I
+\label{eq:rewiring}
+\end{equation}
+--- that is, whenever the cascade traverses the network in fewer interaction cycles than a single edge requires for reconstruction. For any network where trust is built through repeated costly interaction (the defining feature of trust-based governance), this timescale separation is expected to hold by a wide margin. The phase transition is plausibly robust to endogenous network adjustment because, under this timescale-separation assumption, the defense (rebuilding trust) is structurally slower than the attack (propagating contamination). A formal model of endogenous rewiring interacting with cascade dynamics remains a natural extension.
+
+\subsection{Limitations}
+
+The model assumes static $G_I$, uniform $\rho$ and $\tau$, and single-node shocks. Correlated multi-node shocks would produce different phase boundaries. Heterogeneous $\rho$ across edges or communities would create a more complex phase space. Endogenous edge formation --- formally modeling the rewiring defense and its interaction with cascade speed --- is a natural extension.
+
+The computational experiments hold mean degree constant at $\langle k \rangle = 6$ across all topology classes, so effective connectivity $B$ does not vary independently of clustering. The theory's three-condition framing (contagion sensitivity, connectivity, clustering) is therefore two-thirds demonstrated computationally: the clustering condition is cleanly isolated through the ER--WS contrast, but the independent role of $B$ at fixed clustering remains to be tested through systematic parameter sweeps.
+
+The WS topology confirms the mechanism but overstates severity. Real-network simulations (on reconstructed financial or organizational networks) are needed to characterize the intermediate regime between total cascade (WS) and no cascade (ER).
+
+The Bayesian microfoundation for the cascade rule requires independent, uniform discounting. This is a well-motivated choice but a choice nonetheless. The robustness result (\S6) partially addresses this: sharpness survives alternative rules. But the floor location is rule-specific, so the exact value of $\rho_{\min}$ depends on which contamination model is appropriate for a given institutional setting.
+
+\subsection{From Cascade to Transition}
+
+The model characterizes when trust-based coordination becomes structurally unviable --- when the cascade mechanism, given sufficient contagion sensitivity, connectivity, and clustering, can destroy trust connectivity across the network. This is a necessary but not sufficient condition for a governance transition. The actual transition to verification-based governance requires institution-building that operates on different timescales and depends on factors outside the model: political feasibility, regulatory capacity, the availability of verification technologies, and the willingness of incumbents to accept the costs of formalization. Between the cascade and the transition, systems may persist in degraded states where trust governance has failed but verification governance has not yet been built. Characterizing the dynamics of this intermediate regime --- and whether it more closely resembles gradual institutional construction or abrupt regime shifts --- is a natural extension of the theory. The clinical trial system discussed in \S8.2 may currently occupy exactly this intermediate state: the structural conditions for cascade vulnerability appear to be met, but the regulatory architecture has not yet shifted from trial-level auditing to network-level monitoring.
+
+\subsection{What This Theory Is About}
+
+Underneath the formal apparatus, the paper identifies three conditions that must be simultaneously met for trust governance to fail catastrophically: sufficient contagion sensitivity, sufficient connectivity, and persistent local clustering. The first is a property of the organization's culture. The second is a property of its scale. The third is a property of its wiring.
+
+Most governance theories focus on the first two --- how fragile are relationships, and how many are there. The distinctive contribution here is the third: the local topology of the coordination network determines whether trust failures stay local or become systemic. The same triadic closure that makes trust-based coordination efficient --- shared contacts reduce uncertainty and enable reputation --- also creates the structural vulnerability to correlated trust failure. The theory therefore identifies an endogenous tension in trust governance: under sufficient contagion sensitivity and connectivity, the topology that supports efficient trust coordination is also the topology that makes trust connectivity structurally fragile. Whether that fragility culminates in a transition to verification governance depends on institutional responses outside the model.
+
+
+%% ============================================================
+%% DATA ACCESSIBILITY
+%% ============================================================
+
+\section*{Data Accessibility}
+
+All simulation code, figure-generating scripts, ClinicalTrials.gov API query outputs, and AACT database query scripts underlying this study are publicly available at \url{https://github.com/AMBRA7592/trust-percolation-bound}. The repository includes the three cascade simulation scripts (Erd\H{o}s--R\'enyi benchmark, Watts--Strogatz finite-size scaling, and additive-rule comparison), the ClinicalTrials.gov API extraction script used for the site-level overlap analysis in \S8.2, and the AACT PostgreSQL queries used for the investigator-level overlap analysis. No institutional ethics approval was required, as the study uses only publicly available aggregate data.
+
+
+%% ============================================================
+%% RELATED WORK AND REFERENCES
+%% ============================================================
+
+\section{Related Work}
+
+The TPB engages five literatures. Transaction cost economics \cite{williamson1975,williamson1985} locates governance choice in bilateral asset specificity but does not predict a threshold or explain abruptness; the TPB supplies both via the phase boundary and the clustering condition. Embeddedness theory \cite{granovetter1985} establishes that economic action is embedded in social relations but does not specify when embedded governance fails; the TPB identifies the failure condition. Commons governance \cite{ostrom1990} identifies institutional conditions for self-governance that map onto the TPB's low-$B$, low-$\rho$ regime. The relational contracting literature \cite{baker2002} formalizes the conditions under which informal agreements sustain cooperation; the TPB provides a network-topological condition for when such arrangements become structurally vulnerable to cascading failure.
+
+The cascade modeling tradition provides the closest formal antecedents. Granovetter's threshold models \cite{granovetter1978} formalize collective behavior as a function of individual adoption thresholds in a population. Watts \cite{watts2002} extends this to random networks, showing that global cascades emerge from local threshold dynamics. Centola and Macy \cite{centola2007} distinguish simple contagion (one exposure suffices) from complex contagion (multiple exposures required) and show that complex contagions spread on clustered networks but not on networks dominated by long-range shortcuts. Hackett, Melnik, and Gleeson \cite{hackett2011} derive cascade conditions analytically on Newman's clustered random graph model, extending the threshold framework to networks with prescribed clustering. The TPB's central finding --- that the cascade phase transition requires persistent local clustering --- is structurally related to the Centola--Macy result. The TPB adds three elements absent from that framework: a Bayesian microfoundation for the cascade rule that grounds the contamination mechanism in information theory rather than assuming it, an exact analytic floor for cascade initiation, and finite-size scaling evidence that the transition sharpens rather than weakens with system size on networks with persistent clustering.
+
+Financial network contagion provides a parallel formalization in a different domain. Acemoglu, Ozdaglar, and Tahbaz-Salehi \cite{acemoglu2015} show that network topology determines whether financial shocks are absorbed or amplified --- a result structurally parallel to the TPB's central claim. Haldane and May \cite{haldane2011} apply network science to banking regulation, proposing the kind of topology-aware monitoring that the TPB's \S8.2 proposes for clinical trials. The TPB differs from this literature in its information-theoretic foundation and its application to trust intermediation rather than balance-sheet contagion, but the structural logic --- that bilateral verification is insufficient when network topology creates correlated exposure --- is shared.
+
+Trust production theory \cite{zucker1986} distinguishes process-based and institutional trust; the TPB provides a topological condition for the transition. Percolation theory \cite{broadbent1957,stauffer1994} and random graphs with prescribed degree sequences \cite{molloy1995} provide mathematical foundations. The Watts--Strogatz small-world model \cite{wattsstrogatz1998} provides the topology class on which the clustering condition is demonstrated.
+
+\begin{thebibliography}{99}
+
+\bibitem{acemoglu2015}
+Acemoglu, D., Ozdaglar, A.\ and Tahbaz-Salehi, A.\ (2015).
+Systemic risk and stability in financial networks.
+\emph{Am.\ Econ.\ Rev.}, 105(2), 564--608.
+
+\bibitem{baker2002}
+Baker, G., Gibbons, R.\ and Murphy, K.J.\ (2002).
+Relational contracts and the theory of the firm.
+\emph{Q.\ J.\ Econ.}, 117(1), 39--84.
+
+\bibitem{bissiri2016}
+Bissiri, P.G., Holmes, C.C.\ and Walker, S.G.\ (2016).
+A general framework for updating belief distributions.
+\emph{J.\ R.\ Stat.\ Soc.\ B}, 78(5), 1103--1130.
+
+\bibitem{broadbent1957}
+Broadbent, S.R.\ and Hammersley, J.M.\ (1957).
+Percolation processes.
+\emph{Math.\ Proc.\ Cambridge Phil.\ Soc.}, 53(3), 629--641.
+
+\bibitem{centola2007}
+Centola, D.\ and Macy, M.\ (2007).
+Complex contagions and the weakness of long ties.
+\emph{Am.\ J.\ Sociology}, 113(3), 702--734.
+
+\bibitem{fda2022}
+U.S.\ Food and Drug Administration (2022).
+Master protocols: efficient clinical trial design strategies to expedite development of oncology drugs and biologics.
+\emph{Guidance for Industry}.
+
+\bibitem{fda2023}
+U.S.\ Food and Drug Administration (2023).
+Master protocols for drug and biological product development.
+\emph{Draft Guidance for Industry}, December 2023.
+
+\bibitem{granovetter1978}
+Granovetter, M.\ (1978).
+Threshold models of collective behavior.
+\emph{Am.\ J.\ Sociology}, 83(6), 1420--1443.
+
+\bibitem{granovetter1985}
+Granovetter, M.\ (1985).
+Economic action and social structure: the problem of embeddedness.
+\emph{Am.\ J.\ Sociology}, 91(3), 481--510.
+
+\bibitem{haldane2011}
+Haldane, A.G.\ and May, R.M.\ (2011).
+Systemic risk in banking ecosystems.
+\emph{Nature}, 469, 351--355.
+
+\bibitem{hackett2011}
+Hackett, A., Melnik, S.\ and Gleeson, J.P.\ (2011).
+Cascades on a class of clustered random networks.
+\emph{Phys.\ Rev.\ E}, 83, 056107.
+
+\bibitem{ich2025}
+International Council for Harmonisation (2025).
+E6(R3) Guideline for Good Clinical Practice.
+ICH Step 4, January 2025.
+
+\bibitem{kramer1999}
+Kramer, R.M.\ (1999).
+Trust and distrust in organizations: emerging perspectives, enduring questions.
+\emph{Annu.\ Rev.\ Psychol.}, 50, 569--598.
+
+\bibitem{molloy1995}
+Molloy, M.\ and Reed, B.\ (1995).
+A critical point for random graphs with a given degree sequence.
+\emph{Random Structures \& Algorithms}, 6(2--3), 161--179.
+
+\bibitem{newman2009}
+Newman, M.E.J.\ (2009).
+Random graphs with clustering.
+\emph{Phys.\ Rev.\ Lett.}, 103, 058701.
+
+\bibitem{ostrom1990}
+Ostrom, E.\ (1990).
+\emph{Governing the Commons.}
+Cambridge University Press.
+
+\bibitem{slovic1993}
+Slovic, P.\ (1993).
+Perceived risk, trust, and democracy.
+\emph{Risk Analysis}, 13(6), 675--682.
+
+\bibitem{stauffer1994}
+Stauffer, D.\ and Aharony, A.\ (1994).
+\emph{Introduction to Percolation Theory.}
+CRC Press.
+
+\bibitem{watts2002}
+Watts, D.J.\ (2002).
+A simple model of global cascades on random networks.
+\emph{PNAS}, 99(9), 5766--5771.
+
+\bibitem{wattsstrogatz1998}
+Watts, D.J.\ and Strogatz, S.H.\ (1998).
+Collective dynamics of `small-world' networks.
+\emph{Nature}, 393, 440--442.
+
+\bibitem{williamson1975}
+Williamson, O.E.\ (1975).
+\emph{Markets and Hierarchies.}
+Free Press.
+
+\bibitem{williamson1985}
+Williamson, O.E.\ (1985).
+\emph{The Economic Institutions of Capitalism.}
+Free Press.
+
+\bibitem{zucker1986}
+Zucker, L.G.\ (1986).
+Production of trust.
+\emph{Research in Organizational Behavior}, 8, 53--111.
+
+\end{thebibliography}
+
+
+%% ============================================================
+%% APPENDIX
+%% ============================================================
+
+\appendix
+
+\section{Computational Methods}
+
+\subsection{Benchmark Configurations}
+
+Three topology classes are used. Erd\H{o}s--R\'enyi $G(n,p)$ with $\langle k \rangle = 6$. Watts--Strogatz with $k = 6$ neighbors and rewiring probability $p = 0.1$ (clustering $\approx 0.45$). Stochastic block model with 5 communities, 85/15 intra/inter-community edge ratio, and $\langle k \rangle = 6$. System sizes: $n \in \{250, 500, 1000, 2000\}$.
+
+\subsection{Cascade Measurement}
+
+\textbf{Shock protocol.} For each parameter configuration $(\rho, n, \text{topology})$, multiple independent graph realizations are generated, and for each realization, a shock target is selected uniformly at random from nodes with degree $> 0$. WS simulations use higher averaging to resolve the step-function plateau cleanly: $n = 250$: 25 graphs $\times$ 20 shocks $= 500$ cascade runs per $\rho$ point; $n = 500$: 15 $\times$ 12 $= 180$; $n = 1000$: 8 $\times$ 8 $= 64$; $n = 2000$: 4 $\times$ 5 $= 20$. ER simulations use lower averaging since ER cascade variability is itself informative: $n = 250$: 8 $\times$ 8 $= 64$; $n = 500$: 5 $\times$ 5 $= 25$; $n = 1000$: 3 $\times$ 4 $= 12$; $n = 2000$: 2 $\times$ 3 $= 6$. Results are averaged across all runs per $\rho$ point.
+
+\textbf{Net secondary cascade exposure.} The plotted quantity is net secondary cascade exposure, defined as:
+\begin{equation*}
+\text{exposure} = \frac{\text{net secondary cascade}}{n(n-1)/2}
+\end{equation*}
+where the numerator is the number of node pairs losing trust-coordinability after the full cascade, minus the number of pairs whose connectivity is lost mechanically by removing the shock target and its incident edges (i.e., the disruption that would occur even at $\rho = 0$). The denominator is the total number of possible node pairs. This isolates the amplification effect from the direct disruption of the shock.
+
+\textbf{$\rho$ grid.} The contagion sensitivity parameter $\rho$ is swept over approximately 23 values from 0.22 to 0.42, with finer resolution near $\rho_{\min} \approx 0.258$. For Proposition~1 verification (Figure~\ref{fig:prop1}), 26 values from 0.05 to 0.55 are used across 13 values of $\tau$.
+
+\textbf{Critical contagion sensitivity.} $\rho^*_q(B)$ is estimated by linear interpolation across the $\rho$ grid at cascade exposure level $q$, clamped below at $\rho_{\min}$ per Proposition~1.
+
+\subsection{Additive Cascade Rule}
+
+The alternative rule $I_e \leftarrow I_e - \rho \cdot h_e$ (clamped at 0) is run on the same WS graphs. Its analytic floor is $\rho_{\min}^A = (I_0 - \tau) / h_{\max} = (1 - 0.55)/2 = 0.225$.
+
+\end{document}

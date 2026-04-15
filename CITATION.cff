@@ -1,0 +1,21 @@
+cff-version: 1.2.0
+message: "If you use this work, please cite it as below."
+authors:
+  - family-names: "Brandes"
+    given-names: "Amadeus"
+    orcid: "https://orcid.org/0009-0009-9902-2587"
+title: "The Trust Percolation Bound: Correlated Trust Failure and the Structural Limits of Trust Governance"
+version: 2.0.0
+date-released: 2026-04-15
+url: "https://github.com/AMBRA7592/trust-percolation-bound"
+license: MIT
+keywords:
+  - trust
+  - percolation
+  - phase transition
+  - cascade
+  - network science
+  - governance
+  - clinical trials
+  - clustering
+type: software
