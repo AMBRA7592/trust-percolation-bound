@@ -19,7 +19,7 @@
 % --- Title block ---
 \title{The Trust Percolation Bound: Correlated Trust Failure and the Structural Limits of Trust Governance}
 \author{Amadeus Brandes\\
-\textit{Independent Researcher, Kronberg, Germany}}
+\textit{Independent Researcher, Germany}}
 \date{April 2026}
 
 \begin{document}
@@ -219,7 +219,7 @@ By contrast, in a graph family with persistent local clustering, $C_v$ remains b
 \[
 F_1(v) \approx C_v \binom{k_v}{2} = O(1).
 \]
-The number of double-hit opportunities therefore survives the large-$n$ limit. This is the analytic reason the cascade mechanism disappears on locally tree-like sparse random graphs but persists on clustered graph families such as Watts--Strogatz networks.
+The number of double-hit opportunities therefore survives the large-$n$ limit. This is the analytic reason the cascade mechanism disappears on locally tree-like sparse random graphs but persists on clustered graph families such as Watts--Strogatz networks. Keating and H\'ebert-Dufresne \cite{keating2025} reach a complementary conclusion on Newman--Miller networks: discontinuous cascade transitions require not merely group structure but transmission loops --- independent chains intersecting in a triangle --- which is precisely the structural mechanism the double-hit condition captures.
 
 \textbf{Scope of the clustering condition.} The double-hit mechanism --- and therefore the clustering requirement --- applies in the intermediate contagion regime $1 - \sqrt{\tau} < \rho \leq 1 - \tau$. At $\tau = 0.55$, this is the band $0.258 < \rho \leq 0.45$. Above $\rho = 1 - \tau$, a single contaminating hit is sufficient to fail an edge: $(1-\rho) \cdot I_0 < \tau$. In that regime, cascades propagate on any connected graph regardless of clustering, because the contagion is simple rather than complex. The clustering condition characterizes the regime where institutional trust actually lives: $\rho > 0.45$ implies that a single neighboring failure destroys nearly half an agent's accumulated evidence, which represents an extreme sensitivity unlikely to characterize stable trust-based governance. The intermediate band, where contamination is consequential but not individually catastrophic, is the domain where the clustering condition is both necessary and institutionally relevant. All simulations in this paper operate within this band.
 
@@ -405,7 +405,7 @@ The clustering signal is not explained by single-site projection artifacts alone
 
 This projection is a proxy for the trust-intermediation graph $G_I$, not a direct reconstruction. But the robustness of the clustering and connectivity statistics across thresholds confirms that the observed clinical trial infrastructure exhibits the topological features the theory identifies as prerequisites for cascade vulnerability in the intermediate contagion regime. Two of the theory's three conditions --- effective connectivity and persistent clustering --- are satisfied with large margin in the observed network. The system's cascade vulnerability therefore reduces to a single unmeasured parameter: the contagion sensitivity $\rho$, which characterizes how much a neighboring trust failure contaminates adjacent assessments. Estimating $\rho$ --- through survey instruments, natural experiments, or retrospective analysis of cases like Vioxx \cite{topol2004} --- would determine whether the system lies above or below the cascade phase boundary.
 
-Investigator-level overlap tells the same story. Querying the AACT database (Clinical Trials Transformation Initiative) for site-level principal investigators on Phase~III cancer trials since 2018, 646 of 5,152 named investigators (12.5\%) serve as PI on trials for two or more different lead sponsors. The most connected investigators span 7 sponsors across 36--39 trials. These are individuals whose methodological practices and professional reputations constitute shared trust infrastructure across competing pharmaceutical programs --- precisely the shared intermediary nodes through which the theory predicts trust contamination propagates.
+Investigator-level overlap tells the same story. Querying the AACT database (Clinical Trials Transformation Initiative) for site-level investigators on Phase~III interventional cancer trials starting in 2018 or later (snapshot 22 May 2026; 3{,}249 trials, 9{,}999 distinct named investigators across 289 lead sponsors), 1{,}176 of 9{,}999 (11.76\%) serve as principal investigator on trials for two or more distinct lead sponsors. The distribution is heavy-tailed: 922 span two sponsors, 154 span three, and the tail extends to a small number of investigators spanning six or more, with a maximum sponsor span of eight (three investigators) and a maximum trial span of 49 (one investigator, across seven sponsors). Because investigators are identified by raw name strings without disambiguation, the reported 11.76\% is a lower bound on the true cross-sponsor overlap: name variants of the same physical person are counted as distinct. These are individuals whose methodological practices and professional reputations constitute shared trust infrastructure across competing pharmaceutical programs --- precisely the shared intermediary nodes through which the theory predicts trust contamination propagates. The full distribution, the SQL query, and a snapshot manifest are archived in the accompanying repository (\texttt{aact/}).
 
 Structural trends are increasing the clustering further. Master protocol designs, explicitly endorsed by FDA guidance \cite{fda2022,fda2023}, share control arms across multiple investigational drugs under a single infrastructure. Platform trials coordinate multiple sub-studies with shared interim analyses. Adaptive designs create evidential links between otherwise independent treatment arms. Every one of these innovations increases the clustering coefficient of the trust intermediation graph by adding shared nodes and creating triangles.
 
@@ -489,7 +489,7 @@ Most governance theories focus on the first two --- how fragile are relationship
 
 \section*{Data Accessibility}
 
-All simulation code, figure-generating scripts, ClinicalTrials.gov API query outputs, and AACT database query scripts underlying this study are publicly available at \url{https://github.com/AMBRA7592/trust-percolation-bound}. The repository includes the three cascade simulation scripts (Erd\H{o}s--R\'enyi benchmark, Watts--Strogatz finite-size scaling, and additive-rule comparison), the ClinicalTrials.gov API extraction script used for the site-level overlap analysis in \S8.2, and the AACT PostgreSQL queries used for the investigator-level overlap analysis. No institutional ethics approval was required, as the study uses only publicly available aggregate data.
+All simulation code, figure-generating scripts, ClinicalTrials.gov API query outputs, and AACT database query scripts underlying this study are publicly available at \url{https://github.com/AMBRA7592/trust-percolation-bound}. The repository includes the cascade simulation scripts (Erd\H{o}s--R\'enyi benchmark, Watts--Strogatz finite-size scaling, and additive-rule comparison), the ClinicalTrials.gov API extraction scripts used for the site-level overlap analysis in \S8.2 (\texttt{data/}), and the AACT PostgreSQL query used for the investigator-level overlap analysis (\texttt{aact/aact\_investigator\_overlap.sql}). The AACT query can be re-run against the live AACT mirror by any user with a free account (\url{https://aact.ctti-clinicaltrials.org}); the snapshot underlying the numbers reported in \S8.2 is archived as \texttt{aact/snapshot\_manifest.json} (query date 22 May 2026). No institutional ethics approval was required, as the study uses only publicly available aggregate data.
 
 
 %% ============================================================
@@ -567,6 +567,11 @@ Cascades on a class of clustered random networks.
 International Council for Harmonisation (2025).
 E6(R3) Guideline for Good Clinical Practice.
 ICH Step 4, January 2025.
+
+\bibitem{keating2025}
+Keating, L.A.\ and H\'ebert-Dufresne, L.\ (2025).
+Loops, not groups: long cycles are responsible for discontinuous phase transitions in higher-order network contagions.
+arXiv:2511.15688 [physics.soc-ph].
 
 \bibitem{kramer1999}
 Kramer, R.M.\ (1999).

@@ -1,0 +1,57 @@
+{
+  "query_name": "TPB AACT Investigator-Overlap",
+  "paper": "Brandes (2026), The Trust Percolation Bound, §8.2",
+  "query_file": "aact_investigator_overlap.sql",
+  "aact_source": "live cloud mirror (aact-db.ctti-clinicaltrials.org)",
+  "aact_server_version": "PostgreSQL 13.23",
+  "client_version": "psql 18.4",
+  "query_date_utc": "2026-05-22",
+  "queried_by": "Amadeus Brandes",
+
+  "universe": {
+    "phase": "PHASE3",
+    "study_type": "INTERVENTIONAL",
+    "start_date_min": "2018-01-01",
+    "condition_filter": "downcase_name LIKE any of {cancer, carcinoma, neoplasm, tumor, tumour, leukemia, leukaemia, lymphoma, melanoma, sarcoma, myeloma, glioma, glioblastoma}"
+  },
+
+  "investigator_identity": {
+    "source_field": "ctgov.facility_investigators.name",
+    "normalization": "TRIM only (no case-folding, no name disambiguation)",
+    "placeholder_exclusions": [
+      "study director", "principal investigator", "sub-investigator",
+      "subinvestigator", "sub investigator", "study chair",
+      "study principal investigator", "investigator"
+    ],
+    "bias_note": "Different name strings for the same physical person (e.g. with and without middle initial or credentials) are counted as distinct. This biases the multi-sponsor fraction downward; reported values are lower bounds."
+  },
+
+  "sponsor_definition": "ctgov.sponsors WHERE lead_or_collaborator = 'lead'",
+
+  "results": {
+    "trials_in_universe": 3249,
+    "distinct_named_investigators": 9999,
+    "multi_sponsor_investigators": 1176,
+    "pct_multi_sponsor": 11.76,
+    "distinct_lead_sponsors": 289,
+    "distinct_trials_with_named_investigators": 541,
+    "top_investigator_span_sponsors": 8,
+    "top_investigator_span_trials": 49,
+    "distribution_sponsors_per_investigator": {
+      "1": 8823,
+      "2": 922,
+      "3": 154,
+      "4": 55,
+      "5": 26,
+      "6": 12,
+      "7": 4,
+      "8": 3
+    }
+  },
+
+  "output_files": [
+    "headline_metrics.csv",
+    "top20_cross_sponsor_investigators.csv",
+    "sponsors_per_investigator_distribution.csv"
+  ]
+}
