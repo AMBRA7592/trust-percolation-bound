@@ -53,7 +53,7 @@ overlap. Name-normalization would only increase the reported fraction.
 If you use this data or query, please cite:
 
 > Brandes, A. (2026). The Trust Percolation Bound: Correlated Trust Failure
-> and the Structural Limits of Trust Governance. arXiv:XXXX.XXXXX
+> and the Structural Limits of Trust Governance. Zenodo. https://doi.org/10.5281/zenodo.19685771
 
 and AACT itself:
 
