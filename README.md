@@ -2,9 +2,9 @@
 
 **"The Trust Percolation Bound: Correlated Trust Failure and the Structural Limits of Trust Governance"**
 
-Amadeus Brandes, Independent Researcher, Kronberg, Germany
+Amadeus Brandes, Independent Researcher, Wiesbaden, Germany
 
-arXiv: [XXXX.XXXXX](https://arxiv.org/abs/XXXX.XXXXX) (physics.soc-ph; cross-listed cs.SI, econ.TH)
+Zenodo: [10.5281/zenodo.19685771](https://doi.org/10.5281/zenodo.19685771) (concept DOI — resolves to the latest archived version)
 
 ---
 
@@ -20,6 +20,10 @@ The paper identifies an endogenous structural tension in trust governance: the s
 
 **Empirical anchor.** The global clinical trial system is used as an empirical anchor. A sponsor–sponsor projection of the site–sponsor bipartite network (ClinicalTrials.gov, Phase III oncology, 2022–present) yields: mean degree ⟨k⟩ ≈ 66.6, Molloy–Reed branching factor B ≈ 154, average clustering C ≈ 0.77 (global transitivity 0.48), and a giant component covering 98.4% of connected sponsors.
 
+## Publication status
+
+This work is archived on Zenodo and has not been posted to arXiv or published in a peer-reviewed venue. Cite the Zenodo DOI above.
+
 ## Repository Structure
 
 ```
@@ -27,7 +31,7 @@ paper/
   brandes_tpb_2026.tex           # LaTeX submission file (23 references)
 
 figures/
-  prop1_verification.png         # Fig 1: Proposition 1 across 13 τ values
+  prop1_verification.png         # Fig 1: Proposition 1 across 13 tau values
   fss_ws_profiles.png            # Fig 2: WS cascade profiles, 4 system sizes
   fss_ws_vs_er.png               # Fig 3: WS vs ER contrast + ER detail
   step3_overlay.png              # Fig 4: Multiplicative vs additive rules
@@ -43,6 +47,14 @@ simulations/
 data/
   tpb_clinical_trials_query.py   # ClinicalTrials.gov API query (run in Colab)
   tpb_network_projection.py      # Sponsor-sponsor projection (run in Colab)
+  tpb_projection_robustness.py   # Projection robustness checks
+
+aact/
+  aact_investigator_overlap.sql  # AACT investigator-overlap query (section 8.2)
+  snapshot_manifest.json         # AACT snapshot provenance (query date 2026-05-22)
+  headline_metrics.csv           # Reported section 8.2 figures
+  sponsors_per_investigator_distribution.csv
+  top20_cross_sponsor_investigators.csv
 ```
 
 ## Reproducing the Results
@@ -52,13 +64,13 @@ Requirements: Python 3.8+, `numpy`, `networkx`, `matplotlib`.
 ```bash
 pip install numpy networkx matplotlib
 
-# Publication figures (Figures 1–5)
+# Publication figures (Figures 1-5)
 python simulations/tpb_figures_pub.py
 ```
 
 Runtime: ~10–15 minutes. WS simulations use 500 cascade runs per ρ point at n = 250, decreasing to 20 at n = 2000.
 
-The clinical trial data scripts (`data/`) query the ClinicalTrials.gov API and require an internet connection. They are designed to run in Google Colab.
+The clinical trial data scripts (`data/`) query the ClinicalTrials.gov API and require an internet connection. They are designed to run in Google Colab. The AACT query (`aact/`) runs against the live AACT mirror and requires a free account.
 
 ## Key Parameters
 
@@ -79,11 +91,13 @@ The clinical trial data scripts (`data/`) query the ClinicalTrials.gov API and r
 ## Citation
 
 ```bibtex
-@article{brandes2026tpb,
-  author  = {Brandes, Amadeus},
-  title   = {The Trust Percolation Bound: Correlated Trust Failure and the Structural Limits of Trust Governance},
-  year    = {2026},
-  note    = {arXiv:XXXX.XXXXX [physics.soc-ph]}
+@misc{brandes2026tpb,
+  author    = {Brandes, Amadeus},
+  title     = {The Trust Percolation Bound: Correlated Trust Failure and the Structural Limits of Trust Governance},
+  year      = {2026},
+  publisher = {Zenodo},
+  doi       = {10.5281/zenodo.19685771},
+  url       = {https://doi.org/10.5281/zenodo.19685771}
 }
 ```
 
