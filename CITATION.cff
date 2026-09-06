@@ -1,14 +1,20 @@
 cff-version: 1.2.0
 message: "If you use this work, please cite it as below."
-authors:
-  - family-names: "Brandes"
-    given-names: "Amadeus"
-    orcid: "https://orcid.org/0009-0009-9902-2587"
 title: "The Trust Percolation Bound: Correlated Trust Failure and the Structural Limits of Trust Governance"
+abstract: "Simulation code, figures, LaTeX source, and reproducibility materials for a study of correlated trust failure in coordination networks. Proves an exact cascade-initiation floor and shows that, in the intermediate contagion regime, the cascade phase transition requires persistent local clustering. Includes ClinicalTrials.gov and AACT query materials for the clinical-trial empirical anchor."
+type: software
 version: 2.1.0
-date-released: 2026-05-22
-url: "https://github.com/AMBRA7592/trust-percolation-bound"
+date-released: 2026-09-06
 license: MIT
+authors:
+  - family-names: Brandes
+    given-names: Amadeus
+    orcid: "https://orcid.org/0009-0009-9902-2587"
+repository-code: "https://github.com/AMBRA7592/trust-percolation-bound"
+identifiers:
+  - type: doi
+    value: 10.5281/zenodo.19685771
+    description: Concept DOI — resolves to the latest archived version
 keywords:
   - trust
   - percolation
@@ -18,4 +24,13 @@ keywords:
   - governance
   - clinical trials
   - clustering
-type: software
+preferred-citation:
+  type: generic
+  title: "The Trust Percolation Bound: Correlated Trust Failure and the Structural Limits of Trust Governance"
+  authors:
+    - family-names: Brandes
+      given-names: Amadeus
+      orcid: "https://orcid.org/0009-0009-9902-2587"
+  year: 2026
+  doi: 10.5281/zenodo.19685771
+  url: "https://doi.org/10.5281/zenodo.19685771"
